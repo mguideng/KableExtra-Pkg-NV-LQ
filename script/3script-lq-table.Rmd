@@ -1,0 +1,137 @@
+---
+title: "kableExtra-Pkg-NV-LQ"
+author: "Maria Guideng"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(error = FALSE)
+```
+
+ -----------------------------------------------------------------
+                       kableExtra-Pkg-NV-LQ                       
+ -----------------------------------------------------------------
+  Script purpose:                                                 
+  Format and render a table using `knitr::kable` and `kableExtra` 
+ -----------------------------------------------------------------
+
+LQ calculations were performed in the previous script (filename: _2script-lq-model.R_). This final script is specifically for presentation purposes and not for further analysis.
+
+
+### Prelims
+##################################################################
+```{r, results='hide', message=FALSE, warning=FALSE}
+library(knitr)
+options(knitr.table.format = "html")
+
+library(kableExtra)
+ls("package:kableExtra")
+#help(package = "kableExtra")
+
+library(magrittr)     # %>%
+library(dplyr)        # to mutate
+library(formattable)  # to add gradient to table cell specs
+```
+
+
+### Prepare Data Table
+##################################################################
+
+Bring in tabular data of LQ table
+```{r}
+urlfile <- 'https://raw.githubusercontent.com/mguideng/KableExtra-Pkg-NV-LQ/master/data/lqmod.csv'
+lqtab <- read.csv(urlfile)
+```
+
+Change class modes
+```{r}
+sapply(lqtab, class)
+
+cols.num <- c("US.Empl", "US.Percent", "LV.Empl", "LV.Percent", "LV.EmplRqmts", "LV.ExcessEmpl")
+lqtab[cols.num] <- sapply(lqtab[cols.num],as.numeric)
+
+cols.char <- c("NAICS", "Industry", "LV.LQ", "LV.LQClass")
+lqtab[cols.char] <- sapply(lqtab[cols.char],as.character)
+```
+
+Add a row for totals
+```{r results='hide', message=FALSE, warning=FALSE}
+library(janitor)
+lqtab <- lqtab %>% 
+  adorn_totals("row", fill="", na.rm = F)
+
+# Revert back to a numeric. Was set as characters because did not want summed in adorn_totals()
+lqtab$LV.LQ <- as.numeric(lqtab$LV.LQ)
+```
+
+Format to include percents, commas and decimals for clarity
+```{r}
+# Percent columns
+lqtab$US.Percent <- paste(round(lqtab$US.Percent*100, digits=2),"%",sep="")
+lqtab$LV.Percent <- paste(round(lqtab$LV.Percent*100, digits=2),"%",sep="")
+
+# Number columns
+lqtab$US.Empl <- format(lqtab$US.Empl,big.mark=",", trim=TRUE)
+lqtab$LV.Empl <- format(lqtab$LV.Empl,big.mark=",", trim=TRUE)
+lqtab$LV.EmplRqmts <- format(lqtab$LV.EmplRqmts,big.mark=",", trim=TRUE)
+lqtab$LV.ExcessEmpl <- format(lqtab$LV.ExcessEmpl,big.mark=",", trim=TRUE)
+
+# Quotient column
+lqtab$LV.LQ <- format(round(lqtab$LV.LQ, 2), nsmall = 2)
+```
+
+Name headers that will include spaces in them for clarity
+```{r}
+names(lqtab)
+colnames(lqtab) = c("NAICS", "Industry", "US Employment", "US % Share", "Las Vegas Employment",
+                   "Las Vegas % Share", "Employment for Las Vegas Requirements", "Las Vegas LQ",
+                   "Las Vegas LQ Classification", "Las Vegas Excess Employment (to export) or Deficit")
+```
+
+
+### Rendering kableExtra Formatted Tables
+##################################################################
+
+This is the basic HTML table in `kable`:
+
+```{r}
+kable(lqtab, "html")
+```
+
+And here's the makeover after some formatting help from `kableExtra`.
+(Since this will be duplicated for different years, change year in the title caption accordingly, i.e., "20XX Las Vegas MSA Location Quotient".)
+
+```{r, warning=F}
+lqtab %>% 
+  mutate(
+    `Industry` = cell_spec(`Industry`, color = ifelse(`Industry` %in% c("RE", "Management", "Admin", "Arts", "Accommodation"),"black","")),
+    `Las Vegas LQ` = color_tile("white","#00B2FF")(`Las Vegas LQ`),
+    `Las Vegas LQ Classification` = cell_spec(`Las Vegas LQ Classification`, bold=T, color="black", background = ifelse(`Las Vegas LQ Classification`== "Export","#81D4FA","")), 
+    `Las Vegas Excess Employment (to export) or Deficit` = cell_spec(`Las Vegas Excess Employment (to export) or Deficit`, color=ifelse(`Las Vegas Excess Employment (to export) or Deficit` > 1,"","red"))
+
+) %>%
+  select(NAICS, Industry, `US Employment`, `US % Share`, `Las Vegas Employment`, `Las Vegas % Share`,
+         `Employment for Las Vegas Requirements`, `Las Vegas LQ`, `Las Vegas LQ Classification`,  
+         `Las Vegas Excess Employment (to export) or Deficit`) %>%
+  kable(escape = F, align = "c", caption = "2016 Las Vegas MSA Location Quotient", linesep = "") %>%
+  kable_styling(bootstrap_options = c("hover", "condensed"), 
+                position = "center", font_size = 11, full_width = T) %>% 
+  column_spec(1, width = "1cm", border_left = T) %>% 
+  column_spec(2, width = "2cm", border_right = T) %>% 
+  column_spec(3, width = "2cm") %>% 
+  column_spec(4, width = "1cm", border_right = T) %>% 
+  column_spec(5, width = "2cm") %>% 
+  column_spec(6, width = "1cm", border_right = T) %>% 
+  column_spec(7, width = "2cm", border_right = T) %>%
+  column_spec(8, width = "2cm", border_right = T, bold = T, color = "black") %>%
+  column_spec(9, width = "2cm") %>% 
+  column_spec(10, width = "2cm", border_right = T) %>% 
+  row_spec(0, bold = T) %>% 
+  row_spec(11, bold = T, background = "#F2F4F4") %>% 
+  row_spec(13:14, bold = T, background = "#F2F4F4") %>% 
+  row_spec(17:18, bold = T, background = "#F2F4F4") %>% 
+  row_spec(21, bold = T) %>% 
+  footnote(general = c("Assumes Las Vegas demands goods/services at the same level as the nation.  Totals may not sum exactly due to roundng."), general_title = "Notes: ")
+```
+
