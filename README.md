@@ -713,7 +713,7 @@ NA
 </table>
 And here's the makeover after some formatting help from `kableExtra`.
 
-[after](images/after.PNG)
+![after](images/after.PNG)
 
 It's a nice bundle of functions. It's one that is easy to use and easy to understand; thus, it should be popular for those looking to keep the simplicity of the [Bootstrap](https://www.w3schools.com/bootstrap/bootstrap_tables.asp) table style while adding flexible customization. It's better suited for model-output documents and statistical result-type tables, rather than for fully leveraging on the power of visualization to help interpret the data.
 
@@ -731,4 +731,4 @@ Files in the `/script` subfolder serve different purposes.
 -   *(2script-lq-model.R)*: Calculates and models the LQs into a table layout.
 -   *(3script-lq-table.Rmd)*: Runs the `knitr::kable` and `kableExtra` functions to format the table. This is also the output since it's intended for conversions from R Markdown to Markdown and HTML.
 
-[process](images/process.PNG)
+![process](images/process.PNG)
